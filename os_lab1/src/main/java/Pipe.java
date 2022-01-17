@@ -27,6 +27,7 @@ public class Pipe extends Thread {
     public void setValue(int x) {
         value = x;
     }
+
     @Override
     public synchronized void start() {
         startTime = System.currentTimeMillis();
@@ -35,19 +36,25 @@ public class Pipe extends Thread {
 
     public Integer readFromPipe() {
         Integer res = null;
+
         try {
-            while (pipedInputStream.available() != 0) {
+            if (pipedInputStream.available() != 0) {
                 int size = pipedInputStream.available();
-                while (size != 0) {
-                    byte[] arr = new byte[size];
-                    var temp = pipedInputStream.read(arr);
-                    res = (int) arr[0];
-                    if (res == 0){
-                        failedMessage = "Null";
-                        res = null;
-                    }
-                    size -= temp;
+
+                byte[] arr = new byte[size];
+
+                pipedInputStream.read(arr);
+                res = 0;
+
+                for (int i = 0; i < size; i++)
+                    res += arr[i] << (i * 8);
+
+
+                if (res == 0) {
+                    failedMessage = "Null";
+                    res = null;
                 }
+
             }
         } catch (IOException e) {
             failedMessage = "Pipe read error";
@@ -61,7 +68,6 @@ public class Pipe extends Thread {
         System.out.println(processName + " time:" + (endTime - startTime) + "msec:" + res);
         return res;
     }
-
     public void run() {
         try {
             Thread.sleep(sleepTime);
